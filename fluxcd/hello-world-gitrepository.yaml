@@ -1,0 +1,10 @@
+apiVersion: source.toolkit.fluxcd.io/v1beta1
+kind: GitRepository
+metadata:
+  name: hello-world-repo
+  namespace: flux-system
+spec:
+  interval: 1m
+  url: https://github.com:dtdom/rev-hello-world
+  ref:
+    branch: main

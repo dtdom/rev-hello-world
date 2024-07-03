@@ -1,0 +1,74 @@
+name: CI/CD
+
+on:
+  push: 
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.12
+
+      - name: Cache dependencies
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Lint code
+        run: |
+          pip install flake8 > /dev/null 2>&1
+          flake8 .
+
+      - name: Run tests
+        run: python -m unittest discover tests
+
+  build-and-push:
+    runs-on: ubuntu-latest
+    needs: lint-and-test
+    if: github.ref == 'refs/heads/main'  # Only run build on main branch
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Log in to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build and push Docker image
+        uses: gcr.io/kaniko-project/executor:latest
+        with:
+          args: >
+            --destination=${{ steps.login-ecr.outputs.registry }}/hello-world:${{ github.sha }}
+            --context=.
+            --dockerfile=Dockerfile
+
+      - name: Install flux CLI
+        run: |
+          curl -s https://fluxcd.io/install.sh | sudo bash
+
+      - name: Update FluxCD image
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          flux image update --container=hello-world --image=${{ steps.login-ecr.outputs.registry }}/hello-world:${{ github.sha }} --namespace=default --token=$GITHUB_TOKEN

@@ -47,7 +47,7 @@ This cluster should have at least the following components:
 
 For the remote deployment, it also expects a database to be available.
 
-
+## Behaviour
 1. When you push code to the main branch of the Git repository, the following automated process begins:
 2. The GitHub Actions Pipeline get executed:
     1. Checkout and python setup

@@ -57,6 +57,7 @@ This cluster should have at least the following components:
 - Load balancer controller
 - Helm controller
 - Prometheus operator
+- A collector like Alloy already in place
 
 For the remote deployment, it also expects a database to be available.
 

@@ -42,7 +42,7 @@ This solution has been designed to be deployed in a K8s cluster.
 This cluster should have at least the following components:
 
 - Load balancer controller
-- fluxcd operator
+- Helm controller
 - Prometheus operator
 
 For the remote deployment, it also expects a database to be available.
